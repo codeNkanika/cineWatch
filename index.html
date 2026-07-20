@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="/static/css/style.css" />
+<link rel="stylesheet" href="style-dark.css" />
 </head>
 <body>
 
@@ -31,70 +31,58 @@
       </div>
     </div>
 
-    <nav class="tab-nav" role="tablist" aria-label="Film lists">
-      <button class="tab active" data-filter="all" role="tab" aria-selected="true">All</button>
-      <button class="tab" data-filter="Watchlist" role="tab" aria-selected="false">To Watch</button>
-      <button class="tab" data-filter="Watched" role="tab" aria-selected="false">Watched</button>
+    <nav class="tab-nav" role="tablist" aria-label="Site sections">
+      <a class="tab active" href="index.html">Home</a>
+      <a class="tab" href="watchlist.html">Watchlist</a>
     </nav>
 
-    <button class="btn-add" id="openAddModal">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1V14M1 7.5H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <span>Add film</span>
+    <button class="btn-login" id="openLoginModal">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 1H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M9.5 10L13 7L9.5 4M13 7H4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Log in</span>
     </button>
   </div>
 </header>
 
 <main class="page">
 
-  <section class="hero">
-    <p class="hero-eyebrow">Reel&nbsp;01 — Now keeping record</p>
-    <h1 class="hero-title">Every film<br><em>worth remembering.</em></h1>
-    <p class="hero-sub">A quiet place to note what you mean to watch, and what you already have.</p>
+  <section class="landing-hero">
+    <p class="landing-eyebrow"><span></span>Now keeping record &nbsp;·&nbsp; est. reel no. 01</p>
+    <h1 class="landing-title">Every film<br><em>worth remembering.</em></h1>
+    <p class="landing-sub">A quiet, cozy place to note what you mean to watch, and keep the record of what you already have.</p>
 
-    <div class="hero-stats" id="heroStats">
-      <div class="stat">
-        <span class="stat-num" id="statTotal">0</span>
-        <span class="stat-label">in your ledger</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-num" id="statWatched">0</span>
-        <span class="stat-label">watched</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-num" id="statAvg">–</span>
-        <span class="stat-label">average rating</span>
+    <div class="landing-actions">
+      <button class="btn-primary-lg" id="openSignupModal">Start your ledger</button>
+      <a class="btn-secondary-lg" href="watchlist.html">See a sample watchlist</a>
+    </div>
+
+    <div class="marquee-wrap">
+      <div class="marquee-track" id="marqueeTrack">
+        <!-- duplicated in JS for seamless loop -->
       </div>
     </div>
   </section>
 
-  <section class="toolbar">
-    <div class="search-wrap">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" class="search-icon"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      <input type="text" id="searchInput" placeholder="Search by title or genre…" autocomplete="off" />
+  <section class="feature-strip">
+    <div class="feature-card">
+      <p class="feature-num">Kept</p>
+      <h3>Nothing streams away</h3>
+      <p>Your entries live in your own ledger — titles, notes, and ratings, kept exactly as you left them.</p>
     </div>
-    <select id="sortSelect" class="sort-select" aria-label="Sort films">
-      <option value="recent">Recently added</option>
-      <option value="title">Title, A–Z</option>
-      <option value="rating">Highest rated</option>
-    </select>
-  </section>
-
-  <section class="grid-wrap">
-    <div class="film-grid" id="filmGrid"></div>
-
-    <div class="empty-state" id="emptyState" hidden>
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="1.4"/>
-        <path d="M6 17H42" stroke="currentColor" stroke-width="1.4"/>
-        <path d="M13 10V17M20 10V17M27 10V17M34 10V17" stroke="currentColor" stroke-width="1.4"/>
-        <path d="M18 24L28 28.5L18 33V24Z" fill="currentColor"/>
-      </svg>
-      <h3>The reel is empty</h3>
-      <p id="emptyMsg">Nothing here yet. Add the first film to start your ledger.</p>
+    <div class="feature-card">
+      <p class="feature-num">Rated</p>
+      <h3>Brass-stub ratings</h3>
+      <p>Mark a film watched and stamp it, ticket-stub style, from one to ten. No stars, no algorithms.</p>
+    </div>
+    <div class="feature-card">
+      <p class="feature-num">Sorted</p>
+      <h3>Two honest lists</h3>
+      <p>What you mean to watch, and what you already have. That's the whole system.</p>
     </div>
   </section>
+
+  <div class="sprocket-rule" style="margin-bottom: 40px;">
+    <i></i><i></i><i></i>
+  </div>
 
 </main>
 
@@ -102,50 +90,134 @@
   <p>CineWatch — kept, not streamed.</p>
 </footer>
 
-<!-- Add / Edit Modal -->
-<div class="modal-overlay" id="modalOverlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <button class="modal-close" id="closeModal" aria-label="Close">
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <button class="modal-close" id="closeLoginModal" aria-label="Close">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </button>
-    <p class="modal-eyebrow">New entry</p>
-    <h2 class="modal-title" id="modalTitle">Add a film</h2>
+    <p class="modal-eyebrow">Welcome back</p>
+    <h2 class="modal-title" id="loginTitle">Log in to your ledger</h2>
 
-    <form id="movieForm">
+    <form id="loginForm">
       <label class="field">
-        <span>Title</span>
-        <input type="text" id="fieldTitle" placeholder="e.g. In the Mood for Love" required />
+        <span>Email</span>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required />
       </label>
-
       <label class="field">
-        <span>Genre</span>
-        <input type="text" id="fieldGenre" placeholder="e.g. Drama, Romance" />
+        <span>Password</span>
+        <input type="password" id="loginPassword" placeholder="••••••••" required />
       </label>
+      <div class="field-row-link"><a href="#">Forgot password?</a></div>
 
-      <label class="field">
-        <span>Poster URL <em>(optional)</em></span>
-        <input type="url" id="fieldPoster" placeholder="https://…" />
-      </label>
+      <button type="submit" class="btn-solid wide">Log in</button>
 
-      <label class="field">
-        <span>Notes <em>(optional)</em></span>
-        <textarea id="fieldNotes" rows="2" placeholder="Why this one, or who recommended it…"></textarea>
-      </label>
-
-      <p class="form-error" id="formError" hidden></p>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
-        <button type="submit" class="btn-solid">Save to ledger</button>
-      </div>
+      <div class="divider-or">or continue with</div>
+      <button type="button" class="btn-oauth">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M14.7 7.65c0-.53-.05-1.04-.13-1.53H7.5v2.9h4.05c-.18.95-.7 1.76-1.5 2.3v1.9h2.43c1.42-1.3 2.24-3.22 2.24-5.57z" fill="#E0904C"/><path d="M7.5 15c2.03 0 3.73-.67 4.98-1.82l-2.43-1.9c-.67.45-1.54.72-2.55.72-1.96 0-3.62-1.32-4.21-3.1H.78v1.95A7.5 7.5 0 0 0 7.5 15z" fill="#D8B36C"/><path d="M3.29 8.9a4.52 4.52 0 0 1 0-2.8V4.15H.78a7.5 7.5 0 0 0 0 6.7l2.51-1.95z" fill="#C7B49A"/><path d="M7.5 2.98c1.1 0 2.09.38 2.87 1.12l2.15-2.15C11.22.7 9.53 0 7.5 0A7.5 7.5 0 0 0 .78 4.15L3.29 6.1c.59-1.78 2.25-3.12 4.21-3.12z" fill="#8B7863"/></svg>
+        <span>Google</span>
+      </button>
     </form>
+
+    <p class="modal-foot-note">New here? <a href="#" id="switchToSignup">Start a ledger</a></p>
   </div>
 </div>
 
-<!-- Rating Popover Template lives in JS -->
+<!-- Signup Modal -->
+<div class="modal-overlay" id="signupOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+    <button class="modal-close" id="closeSignupModal" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <p class="modal-eyebrow">First entry</p>
+    <h2 class="modal-title" id="signupTitle">Start your ledger</h2>
+
+    <form id="signupForm">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="signupName" placeholder="What should we call you?" required />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" id="signupEmail" placeholder="you@example.com" required />
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" id="signupPassword" placeholder="At least 8 characters" required />
+      </label>
+
+      <button type="submit" class="btn-solid wide">Create my ledger</button>
+    </form>
+
+    <p class="modal-foot-note">Already keeping one? <a href="#" id="switchToLogin">Log in</a></p>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
-<script src="/static/js/app.js"></script>
+<script>
+  // ---- spotlight marquee (decorative, placeholder posters, no external images) ----
+  const spotlight = [
+    "In the Mood\nfor Love", "Paris, Texas", "Come and See", "The Red Shoes",
+    "Stalker", "Amélie", "Chungking\nExpress", "The Grand Budapest\nHotel",
+    "Spirited Away", "Days of Heaven"
+  ];
+  const track = document.getElementById("marqueeTrack");
+  function buildMarquee(){
+    track.innerHTML = "";
+    for(let rep = 0; rep < 2; rep++){
+      spotlight.forEach(title => {
+        const card = document.createElement("div");
+        card.className = "marquee-card";
+        card.innerHTML = `
+          <div class="marquee-poster">${title}</div>
+          <div class="marquee-title">${title.replace("\n"," ")}</div>
+        `;
+        track.appendChild(card);
+      });
+    }
+  }
+  buildMarquee();
+
+  // ---- modal wiring ----
+  const loginOverlay = document.getElementById("loginOverlay");
+  const signupOverlay = document.getElementById("signupOverlay");
+  const toast = document.getElementById("toast");
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+  function open(el){ el.hidden = false; }
+  function close(el){ el.hidden = true; }
+
+  document.getElementById("openLoginModal").addEventListener("click", () => open(loginOverlay));
+  document.getElementById("openSignupModal").addEventListener("click", () => open(signupOverlay));
+  document.getElementById("closeLoginModal").addEventListener("click", () => close(loginOverlay));
+  document.getElementById("closeSignupModal").addEventListener("click", () => close(signupOverlay));
+  document.getElementById("switchToSignup").addEventListener("click", (e) => { e.preventDefault(); close(loginOverlay); open(signupOverlay); });
+  document.getElementById("switchToLogin").addEventListener("click", (e) => { e.preventDefault(); close(signupOverlay); open(loginOverlay); });
+
+  [loginOverlay, signupOverlay].forEach(overlay => {
+    overlay.addEventListener("click", (e) => { if(e.target === overlay) close(overlay); });
+  });
+
+  document.getElementById("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    close(loginOverlay);
+    showToast("Logged in — taking you to your ledger…");
+    setTimeout(() => window.location.href = "watchlist.html", 700);
+  });
+
+  document.getElementById("signupForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    close(signupOverlay);
+    showToast("Ledger created — welcome in.");
+    setTimeout(() => window.location.href = "watchlist.html", 700);
+  });
+</script>
+
 </body>
 </html>
+
