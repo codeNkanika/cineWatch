@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CineWatch — Watchlist</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style-dark.css" />
+</head>
+<body>
+
+<div class="grain"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <circle cx="13" cy="13" r="11.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M13 2.5V4.5M13 21.5V23.5M2.5 13H4.5M21.5 13H23.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="13" cy="13" r="3.2" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">CineWatch</span>
+        <span class="brand-tag">a running ledger of films</span>
+      </div>
+    </div>
+
+    <nav class="tab-nav" role="tablist" aria-label="Film lists">
+      <button class="tab active" data-filter="all">All</button>
+      <button class="tab" data-filter="Watchlist">To Watch</button>
+      <button class="tab" data-filter="Watched">Watched</button>
+    </nav>
+
+    <button class="btn-add" id="openAddModal">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1V14M1 7.5H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span>Add film</span>
+    </button>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="hero">
+    <p class="hero-eyebrow">Reel&nbsp;01 — Now keeping record</p>
+    <h1 class="hero-title">Your <em>ledger</em>, so far.</h1>
+    <p class="hero-sub">Everything you've noted down — what's queued, and what you've already sat through.</p>
+
+    <div class="hero-stats" id="heroStats">
+      <div class="stat">
+        <span class="stat-num" id="statTotal">0</span>
+        <span class="stat-label">in your ledger</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" id="statWatched">0</span>
+        <span class="stat-label">watched</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" id="statAvg">–</span>
+        <span class="stat-label">average rating</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" class="search-icon"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by title or genre…" autocomplete="off" />
+    </div>
+    <select id="sortSelect" class="sort-select" aria-label="Sort films">
+      <option value="recent">Recently added</option>
+      <option value="title">Title, A–Z</option>
+      <option value="rating">Highest rated</option>
+    </select>
+  </section>
+
+  <section class="grid-wrap">
+    <div class="film-grid" id="filmGrid"></div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M6 17H42" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M13 10V17M20 10V17M27 10V17M34 10V17" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M18 24L28 28.5L18 33V24Z" fill="currentColor"/>
+      </svg>
+      <h3>The reel is empty</h3>
+      <p id="emptyMsg">Nothing here yet. Add the first film to start your ledger.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>CineWatch — kept, not streamed.</p>
+</footer>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="closeModal" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <p class="modal-eyebrow">New entry</p>
+    <h2 class="modal-title" id="modalTitle">Add a film</h2>
+
+    <form id="movieForm">
+      <label class="field">
+        <span>Title</span>
+        <input type="text" id="fieldTitle" placeholder="e.g. In the Mood for Love" required />
+      </label>
+
+      <label class="field">
+        <span>Genre</span>
+        <input type="text" id="fieldGenre" placeholder="e.g. Drama, Romance" />
+      </label>
+
+      <label class="field">
+        <span>Notes <em>(optional)</em></span>
+        <textarea id="fieldNotes" rows="2" placeholder="Why this one, or who recommended it…"></textarea>
+      </label>
+
+      <p class="form-error" id="formError" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
+        <button type="submit" class="btn-solid">Save to ledger</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- sample ledger data (stand-in for a real backend) ----
+  let films = [
+    { id: 1, title: "In the Mood for Love", genre: "Drama, Romance", status: "Watched", rating: 9, notes: "Wong Kar-wai — the hallway shots, the score, all of it.", added: 10 },
+    { id: 2, title: "Paris, Texas", genre: "Drama", status: "Watched", rating: 8, notes: "Ry Cooder's slide guitar over that opening desert walk.", added: 9 },
+    { id: 3, title: "Stalker", genre: "Sci-Fi, Drama", status: "Watchlist", rating: null, notes: "Tarkovsky. Need a slow evening for this one.", added: 8 },
+    { id: 4, title: "Amélie", genre: "Comedy, Romance", status: "Watched", rating: 8, notes: "Rewatch every autumn.", added: 7 },
+    { id: 5, title: "The Grand Budapest Hotel", genre: "Comedy", status: "Watched", rating: 9, notes: "Recommended by Priya.", added: 6 },
+    { id: 6, title: "Come and See", genre: "War, Drama", status: "Watchlist", rating: null, notes: "Heard it's not an easy watch — saving for the right night.", added: 5 },
+    { id: 7, title: "Chungking Express", genre: "Drama, Romance", status: "Watchlist", rating: null, notes: "", added: 4 },
+    { id: 8, title: "Spirited Away", genre: "Animation, Fantasy", status: "Watched", rating: 10, notes: "Perfect. No notes.", added: 3 },
+    { id: 9, title: "Days of Heaven", genre: "Drama", status: "Watchlist", rating: null, notes: "That cinematography, apparently.", added: 2 },
+    { id: 10, title: "The Red Shoes", genre: "Drama, Fantasy", status: "Watched", rating: 9, notes: "", added: 1 },
+  ];
+
+  let activeFilter = "all";
+  let searchTerm = "";
+  let sortBy = "recent";
+
+  const grid = document.getElementById("filmGrid");
+  const emptyState = document.getElementById("emptyState");
+  const emptyMsg = document.getElementById("emptyMsg");
+  const toast = document.getElementById("toast");
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2000);
+  }
+
+  function updateStats(){
+    document.getElementById("statTotal").textContent = films.length;
+    const watched = films.filter(f => f.status === "Watched");
+    document.getElementById("statWatched").textContent = watched.length;
+    const rated = watched.filter(f => f.rating != null);
+    const avg = rated.length ? (rated.reduce((s,f) => s + f.rating, 0) / rated.length).toFixed(1) : "–";
+    document.getElementById("statAvg").textContent = avg;
+  }
+
+  function render(){
+    let list = films.filter(f => {
+      const matchesFilter = activeFilter === "all" || f.status === activeFilter;
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = !term || f.title.toLowerCase().includes(term) || f.genre.toLowerCase().includes(term);
+      return matchesFilter && matchesSearch;
+    });
+
+    if(sortBy === "title") list.sort((a,b) => a.title.localeCompare(b.title));
+    else if(sortBy === "rating") list.sort((a,b) => (b.rating ?? -1) - (a.rating ?? -1));
+    else list.sort((a,b) => b.added - a.added);
+
+    grid.innerHTML = "";
+
+    if(list.length === 0){
+      emptyState.hidden = false;
+      emptyMsg.textContent = searchTerm
+        ? `Nothing matches "${searchTerm}".`
+        : activeFilter === "Watched"
+          ? "Nothing watched yet. Mark a film as seen once you get to it."
+          : activeFilter === "Watchlist"
+            ? "Nothing queued. Add a film you mean to watch."
+            : "Nothing here yet. Add the first film to start your ledger.";
+    } else {
+      emptyState.hidden = true;
+      list.forEach(f => grid.appendChild(buildCard(f)));
+    }
+
+    updateStats();
+  }
+
+  function buildCard(f){
+    const card = document.createElement("div");
+    card.className = "film-card";
+    card.innerHTML = `
+      <div class="poster-wrap">
+        <div class="poster-fallback">${f.title}</div>
+        <span class="status-chip ${f.status === "Watched" ? "watched" : "watchlist"}">${f.status === "Watched" ? "Watched" : "To Watch"}</span>
+        ${f.rating != null ? `<span class="rating-badge">${f.rating}</span>` : ""}
+      </div>
+      <div class="card-body">
+        <p class="card-title">${f.title}</p>
+        <p class="card-genre">${f.genre || "—"}</p>
+        ${f.notes ? `<p class="card-notes">${f.notes}</p>` : ""}
+        <div class="card-actions">
+          <button class="icon-btn ${f.status === "Watched" ? "active-state" : ""}" data-action="toggle" data-id="${f.id}">
+            ${f.status === "Watched" ? "Watched ✓" : "Mark watched"}
+          </button>
+          <button class="icon-btn danger" data-action="remove" data-id="${f.id}">Remove</button>
+        </div>
+      </div>
+    `;
+    return card;
+  }
+
+  grid.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if(!btn) return;
+    const id = Number(btn.dataset.id);
+    const film = films.find(f => f.id === id);
+    if(btn.dataset.action === "toggle"){
+      film.status = film.status === "Watched" ? "Watchlist" : "Watched";
+      if(film.status === "Watched" && film.rating == null) film.rating = 8;
+      if(film.status === "Watchlist") film.rating = null;
+      showToast(film.status === "Watched" ? `Marked "${film.title}" as watched.` : `Moved "${film.title}" back to watchlist.`);
+    } else if(btn.dataset.action === "remove"){
+      films = films.filter(f => f.id !== id);
+      showToast(`Removed "${film.title}" from your ledger.`);
+    }
+    render();
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      activeFilter = tab.dataset.filter;
+      render();
+    });
+  });
+
+  document.getElementById("searchInput").addEventListener("input", (e) => {
+    searchTerm = e.target.value.trim();
+    render();
+  });
+
+  document.getElementById("sortSelect").addEventListener("change", (e) => {
+    sortBy = e.target.value;
+    render();
+  });
+
+  // ---- add-film modal ----
+  const modalOverlay = document.getElementById("modalOverlay");
+  const formError = document.getElementById("formError");
+
+  function openModal(){ modalOverlay.hidden = false; }
+  function closeModal(){
+    modalOverlay.hidden = true;
+    document.getElementById("movieForm").reset();
+    formError.hidden = true;
+  }
+
+  document.getElementById("openAddModal").addEventListener("click", openModal);
+  document.getElementById("closeModal").addEventListener("click", closeModal);
+  document.getElementById("cancelModal").addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => { if(e.target === modalOverlay) closeModal(); });
+
+  document.getElementById("movieForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = document.getElementById("fieldTitle").value.trim();
+    const genre = document.getElementById("fieldGenre").value.trim();
+    const notes = document.getElementById("fieldNotes").value.trim();
+
+    if(!title){
+      formError.textContent = "A film needs a title before it can go in the ledger.";
+      formError.hidden = false;
+      return;
+    }
+
+    films.unshift({
+      id: Date.now(),
+      title, genre, notes,
+      status: "Watchlist",
+      rating: null,
+      added: films.length ? Math.max(...films.map(f => f.added)) + 1 : 1
+    });
+
+    closeModal();
+    activeFilter = "all";
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelector('.tab[data-filter="all"]').classList.add("active");
+    render();
+    showToast(`Added "${title}" to your ledger.`);
+  });
+
+  render();
+</script>
+
+</body>
+</html>
