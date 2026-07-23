@@ -1,173 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CineWatch — your film ledger</title>
-<meta name="description" content="CineWatch — a cozy wishlist and ledger for the films you mean to watch, and the ones you already have." />
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="/static/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cozy Watchlist</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕯️</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="grain" aria-hidden="true"></div>
-<div class="filmstrip-rail left" aria-hidden="true"></div>
-<div class="filmstrip-rail right" aria-hidden="true"></div>
+  <nav class="nav">
+    <a href="/" class="nav__brand"><span class="nav__flame">🕯️</span> Cozy Watchlist</a>
+    <a href="/watchlist" class="nav__link">Open my list →</a>
+  </nav>
 
-<!-- ============================== MARQUEE HEADER ============================== -->
-<header class="marquee">
-  <div class="bulb-row" aria-hidden="true"></div>
-  <div class="marquee-inner">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-          <rect x="3" y="7" width="24" height="18" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M3 12.5H27" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M8.5 7V12.5M13.5 7V12.5M18.5 7V12.5M23.5 7V12.5" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M12.5 16.2L19 19.5L12.5 22.8V16.2Z" fill="currentColor"/>
-        </svg>
-      </span>
-      <div class="brand-text">
-        <span class="brand-name">CineWatch</span>
-        <span class="brand-tag">admit one, keep forever</span>
-      </div>
+  <header class="hero">
+    <div class="hero__lamp">
+      <div class="hero__lamp-glow"></div>
+      <div class="hero__lamp-core"></div>
     </div>
+    <p class="hero__eyebrow">a quiet little corner for movie nights</p>
+    <h1>Keep track of what to <em>watch next</em>, without the noise.</h1>
+    <p>No algorithms, no infinite scroll — just a warm little list of the movies and shows you're saving for the right evening.</p>
+    <a href="/watchlist" class="btn btn--primary">Start my watchlist →</a>
+  </header>
 
-    <nav class="tab-nav" role="tablist" aria-label="Film lists">
-      <button class="tab active" data-filter="all" role="tab" aria-selected="true">All</button>
-      <button class="tab" data-filter="Watchlist" role="tab" aria-selected="false">To watch</button>
-      <button class="tab" data-filter="Watched" role="tab" aria-selected="false">Watched</button>
-    </nav>
-
-    <button class="btn-add" id="openAddModal">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1V14M1 7.5H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span>New ticket</span>
-    </button>
-  </div>
-</header>
-
-<main class="page">
-
-  <!-- ============================== BOX OFFICE HERO ============================== -->
-  <section class="box-office">
-    <div class="spotlight spotlight-a" aria-hidden="true"></div>
-    <div class="spotlight spotlight-b" aria-hidden="true"></div>
-
-    <div class="marquee-sign">
-      <p class="hero-eyebrow">Now showing — your queue</p>
-      <h1 class="hero-title">Every film<br><em>worth remembering.</em></h1>
+  <section class="strip">
+    <div class="strip__card">
+      <div class="dot" style="background:var(--lamp)"></div>
+      <h3>Want to watch</h3>
+      <p>Toss in anything that catches your eye — a trailer, a friend's recommendation, a late-night whim.</p>
     </div>
-
-    <p class="hero-sub">Note what you mean to watch, stamp what you already have, and keep the stubs.</p>
-
-    <div class="admit-strip" id="heroStats">
-      <div class="admit-stub">
-        <span class="stub-eyebrow">Admit</span>
-        <span class="stat-num" id="statTotal">0</span>
-        <span class="stat-label">in your ledger</span>
-      </div>
-      <div class="admit-stub">
-        <span class="stub-eyebrow">Reel</span>
-        <span class="stat-num" id="statWatched">0</span>
-        <span class="stat-label">watched</span>
-      </div>
-      <div class="admit-stub">
-        <span class="stub-eyebrow">Score</span>
-        <span class="stat-num" id="statAvg">–</span>
-        <span class="stat-label">average rating</span>
-      </div>
+    <div class="strip__card">
+      <div class="dot" style="background:var(--ember)"></div>
+      <h3>Currently watching</h3>
+      <p>Mid-series? Move it here so you always know exactly where you left off.</p>
     </div>
-
-    <div class="ticker-wrap" aria-hidden="true">
-      <span class="ticker-label"><span class="dot"></span><span>On the marquee</span></span>
-      <div class="ticker-track" id="tickerTrack"></div>
+    <div class="strip__card">
+      <div class="dot" style="background:var(--sage)"></div>
+      <h3>Watched &amp; rated</h3>
+      <p>Give it a rating, jot a note, and let it settle into your little archive.</p>
     </div>
   </section>
 
-  <!-- ============================== TOOLBAR ============================== -->
-  <section class="toolbar">
-    <div class="search-wrap">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" class="search-icon"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      <input type="text" id="searchInput" placeholder="Search the box office…" autocomplete="off" />
-    </div>
-    <div class="select-wrap">
-      <select id="sortSelect" class="sort-select" aria-label="Sort films">
-        <option value="recent">Recently added</option>
-        <option value="title">Title, A–Z</option>
-        <option value="rating">Highest rated</option>
-      </select>
-      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" class="select-caret"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-  </section>
+  <footer class="footer">
+    Made for slow evenings and good stories.
+  </footer>
 
-  <!-- ============================== FILM GRID ============================== -->
-  <section class="grid-wrap">
-    <div class="film-grid" id="filmGrid"></div>
-
-    <div class="empty-state" id="emptyState" hidden>
-      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-        <rect x="6" y="14" width="44" height="32" rx="3" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M6 22H50" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M15 14V22M24 14V22M33 14V22M42 14V22" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M22 28L34 34L22 40V28Z" fill="currentColor"/>
-      </svg>
-      <h3>The box office is empty</h3>
-      <p id="emptyMsg">Nothing here yet — add the first film to start your ledger.</p>
-    </div>
-  </section>
-
-</main>
-
-<footer class="site-footer">
-  <p>CineWatch — kept, not streamed.</p>
-</footer>
-
-<!-- ============================== ADD MODAL ============================== -->
-<div class="modal-overlay" id="modalOverlay" hidden>
-  <div class="modal ticket-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <button class="modal-close" id="closeModal" aria-label="Close">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    </button>
-    <p class="modal-eyebrow">Issuing a new stub</p>
-    <h2 class="modal-title" id="modalTitle">Add a film</h2>
-
-    <form id="movieForm">
-      <label class="field">
-        <span>Title</span>
-        <input type="text" id="fieldTitle" placeholder="e.g. In the Mood for Love" required maxlength="200" />
-      </label>
-
-      <label class="field">
-        <span>Genre</span>
-        <input type="text" id="fieldGenre" placeholder="e.g. Drama, Romance" maxlength="80" />
-      </label>
-
-      <label class="field">
-        <span>Poster URL <em>(optional)</em></span>
-        <input type="url" id="fieldPoster" placeholder="https://…" />
-      </label>
-
-      <label class="field">
-        <span>Notes <em>(optional)</em></span>
-        <textarea id="fieldNotes" rows="2" placeholder="Why this one, or who recommended it…" maxlength="400"></textarea>
-      </label>
-
-      <p class="form-error" id="formError" hidden></p>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
-        <button type="submit" class="btn-solid">Print ticket</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<script src="/static/js/app.js"></script>
 </body>
 </html>
