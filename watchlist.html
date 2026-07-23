@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Watchlist · Cozy Watchlist</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕯️</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/" class="nav__brand"><span class="nav__flame">🕯️</span> Cozy Watchlist</a>
+    <a href="/" class="nav__link">← Home</a>
+  </nav>
+
+  <header class="page-header">
+    <h1>My watchlist</h1>
+    <p>Everything you're saving for a good night in.</p>
+    <div class="stats" id="stats">
+      <span class="stat-pill"><span class="swatch" style="background:var(--lamp)"></span> Want to watch: <b id="stat-want">0</b></span>
+      <span class="stat-pill"><span class="swatch" style="background:var(--ember)"></span> Watching: <b id="stat-watching">0</b></span>
+      <span class="stat-pill"><span class="swatch" style="background:var(--sage)"></span> Watched: <b id="stat-watched">0</b></span>
+    </div>
+  </header>
+
+  <form class="add-form" id="add-form">
+    <div class="add-form__row">
+      <input type="text" id="title-input" placeholder="Add a title… e.g. Paddington" maxlength="200" required />
+
+      <div class="type-toggle">
+        <input type="radio" name="media_type" id="type-movie" value="movie" checked />
+        <label for="type-movie">🎬 Movie</label>
+        <input type="radio" name="media_type" id="type-tv" value="tv" />
+        <label for="type-tv">📺 Show</label>
+      </div>
+
+      <button type="submit" class="btn btn--primary">+ Add</button>
+
+      <textarea id="notes-input" placeholder="Optional note — who recommended it, why you're curious…" maxlength="300"></textarea>
+    </div>
+  </form>
+
+  <div class="filters" id="filters">
+    <button class="filter-tab active" data-filter="all">All</button>
+    <button class="filter-tab" data-filter="want_to_watch">Want to watch</button>
+    <button class="filter-tab" data-filter="watching">Watching</button>
+    <button class="filter-tab" data-filter="watched">Watched</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="empty" id="empty" style="display:none">
+    <div class="empty__icon">🕯️</div>
+    <h3>Nothing here yet</h3>
+    <p>Add the first title above to start your list.</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <footer class="footer">Made for slow evenings and good stories.</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
