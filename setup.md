@@ -1,89 +1,168 @@
-# CineWatch — Setup
+# Setup guide
 
-A cozy movie wishlist & ledger, styled as a book of cinema ticket stubs.
+Everything you need to get Cozy Watchlist running locally in VS Code, talking
+to a real PostgreSQL database, and pushed up to GitHub.
 
-## 1. Install dependencies
+## 0. What you'll need installed
+
+- [Python 3.10+](https://www.python.org/downloads/)
+- [PostgreSQL](https://www.postgresql.org/download/) (14+ is fine)
+- [VS Code](https://code.visualstudio.com/)
+- [Git](https://git-scm.com/downloads)
+- VS Code extensions (optional but nice): **Python** (Microsoft) and
+  **PostgreSQL** (by Chris Kolkman, adds a database explorer in the sidebar)
+
+---
+
+## 1. Create the database
+
+Open a terminal (or VS Code's integrated terminal, `` Ctrl+` ``) and run:
 
 ```bash
-cd cinewatch
-python -m venv venv && source venv/bin/activate   # optional but recommended
+# log into the default postgres superuser
+psql -U postgres
+```
+
+Inside the `psql` prompt:
+
+```sql
+CREATE DATABASE cozy_watchlist;
+\q
+```
+
+That's it — the table itself gets created automatically the first time you
+run the server (see `db.py`'s `init_db()`), so you don't need to run
+`schema.sql` by hand unless you want to.
+
+---
+
+## 2. Open the project in VS Code
+
+```bash
+cd watchlist-app
+code .
+```
+
+---
+
+## 3. Create a virtual environment and install dependencies
+
+In the VS Code terminal:
+
+```bash
+python -m venv venv
+
+# activate it
+source venv/bin/activate        # macOS / Linux
+venv\Scripts\activate           # Windows (PowerShell: venv\Scripts\Activate.ps1)
+
 pip install -r requirements.txt
 ```
 
-This installs `Flask`, `flask-cors`, and `psycopg2-binary`.
+VS Code may prompt "Select a Python interpreter" — pick the one inside
+`venv/`.
 
-## 2. Configure the database connection
+---
 
-`db.py` reads connection details from environment variables, falling back
-to local defaults (`localhost`, database `cineWatch`, user `postgres`,
-password `2602`, port `5432`) if none are set. To override, export
-variables before running:
+## 4. Configure your environment variables
 
 ```bash
-export DB_HOST=localhost
-export DB_NAME=cineWatch
-export DB_USER=postgres
-export DB_PASSWORD=your_password
-export DB_PORT=5432
+cp .env.example .env
 ```
 
-Make sure Postgres is running and the database exists:
+Open `.env` and fill in your real Postgres credentials:
 
-```bash
-createdb cineWatch
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=cozy_watchlist
+DB_USER=postgres
+DB_PASSWORD=your_actual_password
+PORT=5000
 ```
 
-You don't need to create the `movies` table by hand — `server.py` calls
-`db.init_db()` on startup, which creates the table if it's missing and
-backfills the `poster_url` / `notes` / `created_at` columns on older tables.
+`.env` is already listed in `.gitignore`, so your password never gets
+committed.
 
-## 3. Run the app
+---
+
+## 5. Run it
 
 ```bash
 python server.py
 ```
 
-Then open **http://localhost:5000**. One process serves both the API and
-the frontend.
-
-## 4. Project structure
+You should see:
 
 ```
-cinewatch/
-├── db.py                  # database functions (add/view/mark/rate/delete + init_db)
-├── server.py               # Flask API + serves the frontend
-├── requirements.txt
-├── setup.md
-├── templates/
-│   └── index.html            # page shell (marquee header, box-office hero, ticket grid, modal)
-└── static/
-    ├── css/
-    │   └── style.css          # full design system — theater/ticket-stub theme
-    └── js/
-        └── app.js             # fetches the API, renders cards, handles all interactions
+🕯️  Cozy Watchlist running at http://localhost:5000
 ```
 
-## 5. API reference
+Open that URL in your browser. The landing page is at `/`, the app itself
+is at `/watchlist`. The first request will auto-create the
+`watchlist_items` table if it doesn't already exist.
 
-| Method | Route                        | Body                    | Description                    |
-|--------|-------------------------------|--------------------------|---------------------------------|
-| GET    | `/api/movies`                 | —                        | List all movies                |
-| GET    | `/api/movies/<id>`             | —                        | Get one movie                  |
-| POST   | `/api/movies`                  | `title, genre, poster_url, notes` | Add a movie (status: Watchlist) |
-| PATCH  | `/api/movies/<id>/watched`      | —                        | Mark as watched                |
-| PATCH  | `/api/movies/<id>/watchlist`    | —                        | Move back to watchlist         |
-| PATCH  | `/api/movies/<id>/rating`       | `rating` (1–10)          | Set a rating                   |
-| DELETE | `/api/movies/<id>`              | —                        | Remove a movie                 |
+**Quick check the API is alive:** visit `http://localhost:5000/api/health` —
+you should see `{"status": "ok"}`.
 
-## 6. Design notes
+---
 
-The whole UI leans into the idea of a "ledger of ticket stubs": each film
-card is die-cut like a real admission ticket (perforated tear line, notch
-cutouts), the header is a lightbulb marquee, and the stats up top are
-printed as a shared admission strip. Fonts: **Fraunces** (display/italic),
-**Inter** (body), **Space Mono** (ticket data — codes, counts, labels).
+## 6. Everyday development
 
-> Note: your original `app.py` command-line tool wasn't part of this
-> upload, so it isn't included here — everything else (`db.py`'s five
-> core functions, `server.py`, and the frontend) has been rebuilt and
-> restyled from your files.
+- Backend code: `server.py` (routes) and `db.py` (all SQL/database logic)
+- Frontend code: `index.html`, `watchlist.html`, `style.css`, `app.js`
+- Flask runs with `debug=True`, so editing `server.py` or `db.py` auto-reloads
+  the server. For frontend files, just refresh the browser.
+
+---
+
+## 7. Push this project to GitHub
+
+If you haven't already, create a free account at
+[github.com](https://github.com) and install Git.
+
+**Option A — using the GitHub website + git CLI:**
+
+1. Go to [github.com/new](https://github.com/new), name the repo (e.g.
+   `cozy-watchlist`), leave it empty (no README/gitignore — you already have
+   those), and click **Create repository**.
+2. Back in your terminal, inside the `watchlist-app` folder:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit: cozy watchlist app"
+git branch -M main
+git remote add origin https://github.com/<your-username>/cozy-watchlist.git
+git push -u origin main
+```
+
+**Option B — using the GitHub CLI (`gh`):**
+
+```bash
+gh auth login
+git init
+git add .
+git commit -m "Initial commit: cozy watchlist app"
+gh repo create cozy-watchlist --public --source=. --remote=origin --push
+```
+
+**Option C — using VS Code's built-in Source Control:**
+
+1. Click the Source Control icon in the left sidebar (or `Ctrl+Shift+G`).
+2. Click **Initialize Repository**.
+3. Stage and commit your files with a message like "Initial commit."
+4. Click **Publish Branch** and follow the prompts to create the GitHub repo
+   directly from VS Code.
+
+---
+
+## Troubleshooting
+
+| Problem | Likely fix |
+|---|---|
+| `psycopg2.OperationalError: connection refused` | PostgreSQL isn't running. Start it (`brew services start postgresql`, `sudo service postgresql start`, or via the Postgres app on Windows). |
+| `FATAL: password authentication failed` | Double-check `DB_USER` / `DB_PASSWORD` in `.env` match your local Postgres setup. |
+| `relation "watchlist_items" does not exist` | Restart `server.py` — `init_db()` runs on startup and creates it. |
+| Port 5000 already in use | Change `PORT` in `.env` to something like `5050`. |
+| CSS/JS changes not showing | Hard-refresh the browser (`Ctrl+Shift+R` / `Cmd+Shift+R`) — static files can be cached. |
