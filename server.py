@@ -1,10 +1,10 @@
 """
 CineWatch API server.
 
-Thin Flask layer over db.py — every route just calls one of the existing
-functions (add_movie, view_movies, mark_watched, rate_movie, delete_movie)
-that your teammate already wrote, plus a couple of small additions
-(get_movie, mark_watchlist, notes/poster support) needed for a richer UI.
+Thin Flask layer over db.py — every route calls one of the functions in
+db.py (add_movie, view_movies, mark_watched, mark_watchlist, rate_movie,
+delete_movie, get_movie) and returns JSON, plus two routes that serve the
+frontend files.
 
 Run:
     pip install -r requirements.txt
@@ -20,7 +20,8 @@ import db
 app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
-db.init_db()
+with app.app_context():
+    db.init_db()
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ def api_get_movie(movie_id):
 
 @app.route("/api/movies", methods=["POST"])
 def api_add_movie():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(force=True, silent=True) or {}
     title = (data.get("title") or "").strip()
     genre = (data.get("genre") or "").strip()
     poster_url = (data.get("poster_url") or "").strip() or None
@@ -64,6 +65,8 @@ def api_add_movie():
 
     if not title:
         return jsonify({"error": "Title is required"}), 400
+    if len(title) > 200:
+        return jsonify({"error": "Title is too long"}), 400
 
     movie = db.add_movie(title, genre, poster_url, notes)
     return jsonify(movie), 201
@@ -87,7 +90,7 @@ def api_mark_watchlist(movie_id):
 
 @app.route("/api/movies/<int:movie_id>/rating", methods=["PATCH"])
 def api_rate_movie(movie_id):
-    data = request.get_json(force=True) or {}
+    data = request.get_json(force=True, silent=True) or {}
     rating = data.get("rating")
 
     try:
@@ -106,8 +109,21 @@ def api_rate_movie(movie_id):
 
 @app.route("/api/movies/<int:movie_id>", methods=["DELETE"])
 def api_delete_movie(movie_id):
+    movie = db.get_movie(movie_id)
+    if not movie:
+        return jsonify({"error": "Movie not found"}), 404
     db.delete_movie(movie_id)
     return jsonify({"success": True})
+
+
+@app.errorhandler(404)
+def not_found(_err):
+    return jsonify({"error": "Not found"}), 404
+
+
+@app.errorhandler(500)
+def server_error(_err):
+    return jsonify({"error": "Something went wrong on the server"}), 500
 
 
 if __name__ == "__main__":
