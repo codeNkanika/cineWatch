@@ -15,6 +15,8 @@
 <body>
 
 <div class="grain" aria-hidden="true"></div>
+<div class="filmstrip-rail left" aria-hidden="true"></div>
+<div class="filmstrip-rail right" aria-hidden="true"></div>
 
 <!-- ============================== MARQUEE HEADER ============================== -->
 <header class="marquee">
@@ -52,8 +54,14 @@
 
   <!-- ============================== BOX OFFICE HERO ============================== -->
   <section class="box-office">
-    <p class="hero-eyebrow">Now showing — your queue</p>
-    <h1 class="hero-title">Every film<br><em>worth remembering.</em></h1>
+    <div class="spotlight spotlight-a" aria-hidden="true"></div>
+    <div class="spotlight spotlight-b" aria-hidden="true"></div>
+
+    <div class="marquee-sign">
+      <p class="hero-eyebrow">Now showing — your queue</p>
+      <h1 class="hero-title">Every film<br><em>worth remembering.</em></h1>
+    </div>
+
     <p class="hero-sub">Note what you mean to watch, stamp what you already have, and keep the stubs.</p>
 
     <div class="admit-strip" id="heroStats">
@@ -72,6 +80,11 @@
         <span class="stat-num" id="statAvg">–</span>
         <span class="stat-label">average rating</span>
       </div>
+    </div>
+
+    <div class="ticker-wrap" aria-hidden="true">
+      <span class="ticker-label"><span class="dot"></span><span>On the marquee</span></span>
+      <div class="ticker-track" id="tickerTrack"></div>
     </div>
   </section>
 
