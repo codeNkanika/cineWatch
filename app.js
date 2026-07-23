@@ -31,6 +31,7 @@ const toastEl = document.getElementById("toast");
 const statTotal = document.getElementById("statTotal");
 const statWatched = document.getElementById("statWatched");
 const statAvg = document.getElementById("statAvg");
+const tickerTrack = document.getElementById("tickerTrack");
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -137,6 +138,16 @@ function render() {
   });
 
   renderStats();
+  renderTicker();
+}
+
+function renderTicker() {
+  const titles = state.movies.length
+    ? state.movies.map((m) => m.title)
+    : ["Add your first film to see it here"];
+  // duplicate the list so the CSS scroll (translateX -50%) loops seamlessly
+  const loop = [...titles, ...titles];
+  tickerTrack.innerHTML = loop.map((t) => `<span>${escapeHTML(t)}</span>`).join("");
 }
 
 function renderStats() {
@@ -160,23 +171,18 @@ function buildCard(movie, index) {
   const isWatched = movie.status === "Watched";
 
   card.innerHTML = `
-    <div class="poster-wrap">
+    <div class="poster-frame">
       ${
         movie.poster_url
-          ? `<img src="${escapeAttr(movie.poster_url)}" alt="${escapeAttr(movie.title)} poster" loading="lazy" onerror="this.parentElement.innerHTML=fallbackPosterHTML()" />`
+          ? `<img src="${escapeAttr(movie.poster_url)}" alt="${escapeAttr(movie.title)} poster" loading="lazy" onerror="this.outerHTML=fallbackPosterHTML()" />`
           : fallbackPosterHTML()
       }
       <span class="status-chip ${isWatched ? "watched" : "watchlist"}">${isWatched ? "Watched" : "To watch"}</span>
-      ${
-        movie.rating
-          ? `<span class="rating-badge">${movie.rating}</span>`
-          : ""
-      }
+      ${movie.rating ? `<span class="rating-badge">${movie.rating}</span>` : ""}
+      ${posterScrimHTML(movie)}
     </div>
-    <div class="tear-line"></div>
-    <div class="card-body">
-      <h3 class="card-title">${escapeHTML(movie.title)}</h3>
-      <p class="card-genre">${escapeHTML(movie.genre || "Unsorted")}</p>
+    <div class="perf-seam" aria-hidden="true"></div>
+    <div class="stub-footer">
       ${movie.notes ? `<p class="card-notes">${escapeHTML(movie.notes)}</p>` : ""}
       <div class="card-actions">
         <button class="icon-btn watch-toggle ${isWatched ? "active-state" : ""}" data-id="${movie.id}" data-watched="${isWatched}">
@@ -209,6 +215,13 @@ function buildCard(movie, index) {
   });
 
   return card;
+}
+
+function posterScrimHTML(movie) {
+  return `<div class="poster-scrim">
+    <h3 class="card-title">${escapeHTML(movie.title)}</h3>
+    <p class="card-genre">${escapeHTML(movie.genre || "Unsorted")}</p>
+  </div>`;
 }
 
 function fallbackPosterHTML() {
