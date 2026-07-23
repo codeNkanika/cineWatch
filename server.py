@@ -1,130 +1,136 @@
 """
-CineWatch API server.
+server.py
+---------
+Flask app that does two jobs:
+  1. Serves the static frontend (index.html, watchlist.html, style.css, app.js)
+  2. Exposes a small JSON REST API under /api/* backed by PostgreSQL (db.py)
 
-Thin Flask layer over db.py — every route calls one of the functions in
-db.py (add_movie, view_movies, mark_watched, mark_watchlist, rate_movie,
-delete_movie, get_movie) and returns JSON, plus two routes that serve the
-frontend files.
-
-Run:
-    pip install -r requirements.txt
-    python server.py
-Then open http://localhost:5000
+Run with:  python server.py
 """
+
+import os
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from psycopg2 import errors as pg_errors
+from dotenv import load_dotenv
 
 import db
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+load_dotenv()
+
+app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 
-with app.app_context():
-    db.init_db()
+VALID_STATUSES = {"want_to_watch", "watching", "watched"}
+VALID_TYPES = {"movie", "tv"}
 
 
-# ---------------------------------------------------------------------------
-# Frontend
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Frontend routes
+# ---------------------------------------------------------------------
 
 @app.route("/")
-def index():
-    return send_from_directory("templates", "index.html")
+def home():
+    return send_from_directory(".", "index.html")
 
 
-@app.route("/static/<path:path>")
-def static_files(path):
-    return send_from_directory("static", path)
+@app.route("/watchlist.html")
+@app.route("/watchlist")
+def watchlist_page():
+    return send_from_directory(".", "watchlist.html")
 
 
-# ---------------------------------------------------------------------------
-# API
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# API routes
+# ---------------------------------------------------------------------
 
-@app.route("/api/movies", methods=["GET"])
-def api_view_movies():
-    return jsonify(db.view_movies())
-
-
-@app.route("/api/movies/<int:movie_id>", methods=["GET"])
-def api_get_movie(movie_id):
-    movie = db.get_movie(movie_id)
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-    return jsonify(movie)
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "ok"})
 
 
-@app.route("/api/movies", methods=["POST"])
-def api_add_movie():
-    data = request.get_json(force=True, silent=True) or {}
+@app.route("/api/stats")
+def stats():
+    return jsonify(db.get_stats())
+
+
+@app.route("/api/items", methods=["GET"])
+def get_items():
+    status = request.args.get("status")
+    if status and status not in VALID_STATUSES:
+        return jsonify({"error": f"invalid status '{status}'"}), 400
+    return jsonify(db.list_items(status=status))
+
+
+@app.route("/api/items", methods=["POST"])
+def add_item():
+    data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()
-    genre = (data.get("genre") or "").strip()
-    poster_url = (data.get("poster_url") or "").strip() or None
-    notes = (data.get("notes") or "").strip() or None
+    media_type = (data.get("media_type") or "movie").strip()
+    notes = (data.get("notes") or "").strip()
 
     if not title:
-        return jsonify({"error": "Title is required"}), 400
-    if len(title) > 200:
-        return jsonify({"error": "Title is too long"}), 400
+        return jsonify({"error": "title is required"}), 400
+    if media_type not in VALID_TYPES:
+        return jsonify({"error": f"media_type must be one of {sorted(VALID_TYPES)}"}), 400
 
-    movie = db.add_movie(title, genre, poster_url, notes)
-    return jsonify(movie), 201
-
-
-@app.route("/api/movies/<int:movie_id>/watched", methods=["PATCH"])
-def api_mark_watched(movie_id):
-    movie = db.mark_watched(movie_id)
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-    return jsonify(movie)
+    item = db.create_item(title, media_type, notes)
+    return jsonify(item), 201
 
 
-@app.route("/api/movies/<int:movie_id>/watchlist", methods=["PATCH"])
-def api_mark_watchlist(movie_id):
-    movie = db.mark_watchlist(movie_id)
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-    return jsonify(movie)
+@app.route("/api/items/<int:item_id>", methods=["PATCH"])
+def edit_item(item_id):
+    if db.get_item(item_id) is None:
+        return jsonify({"error": "item not found"}), 404
 
+    data = request.get_json(silent=True) or {}
+    updates = {}
 
-@app.route("/api/movies/<int:movie_id>/rating", methods=["PATCH"])
-def api_rate_movie(movie_id):
-    data = request.get_json(force=True, silent=True) or {}
-    rating = data.get("rating")
+    if "title" in data:
+        title = (data["title"] or "").strip()
+        if not title:
+            return jsonify({"error": "title cannot be empty"}), 400
+        updates["title"] = title
+
+    if "media_type" in data:
+        if data["media_type"] not in VALID_TYPES:
+            return jsonify({"error": f"media_type must be one of {sorted(VALID_TYPES)}"}), 400
+        updates["media_type"] = data["media_type"]
+
+    if "status" in data:
+        if data["status"] not in VALID_STATUSES:
+            return jsonify({"error": f"status must be one of {sorted(VALID_STATUSES)}"}), 400
+        updates["status"] = data["status"]
+
+    if "rating" in data:
+        rating = data["rating"]
+        if rating is not None and rating not in (1, 2, 3, 4, 5):
+            return jsonify({"error": "rating must be 1-5 or null"}), 400
+        updates["rating"] = rating
+
+    if "notes" in data:
+        updates["notes"] = (data["notes"] or "").strip()
 
     try:
-        rating = int(rating)
-    except (TypeError, ValueError):
-        return jsonify({"error": "Rating must be a number from 1 to 10"}), 400
+        item = db.update_item(item_id, **updates)
+    except pg_errors.CheckViolation:
+        return jsonify({"error": "invalid field value"}), 400
 
-    if not (1 <= rating <= 10):
-        return jsonify({"error": "Rating must be between 1 and 10"}), 400
-
-    movie = db.rate_movie(movie_id, rating)
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-    return jsonify(movie)
+    return jsonify(item)
 
 
-@app.route("/api/movies/<int:movie_id>", methods=["DELETE"])
-def api_delete_movie(movie_id):
-    movie = db.get_movie(movie_id)
-    if not movie:
-        return jsonify({"error": "Movie not found"}), 404
-    db.delete_movie(movie_id)
-    return jsonify({"success": True})
-
-
-@app.errorhandler(404)
-def not_found(_err):
-    return jsonify({"error": "Not found"}), 404
-
-
-@app.errorhandler(500)
-def server_error(_err):
-    return jsonify({"error": "Something went wrong on the server"}), 500
+@app.route("/api/items/<int:item_id>", methods=["DELETE"])
+def remove_item(item_id):
+    deleted = db.delete_item(item_id)
+    if deleted is None:
+        return jsonify({"error": "item not found"}), 404
+    return jsonify({"deleted": deleted["id"]})
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    db.init_pool()
+    db.init_db()
+    port = int(os.getenv("PORT", 5000))
+    print(f"\n🕯️  Cozy Watchlist running at http://localhost:{port}\n")
+    app.run(debug=True, port=port)
