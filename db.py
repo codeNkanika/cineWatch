@@ -1,3 +1,15 @@
+"""
+CineWatch — database layer.
+
+Wraps a Postgres `movies` table with a small set of CRUD functions used by
+server.py. Connection details come from environment variables (see
+setup.md), falling back to sane local-dev defaults.
+
+A connection is opened lazily and re-opened automatically if it drops, so
+the API server doesn't need to worry about connection lifecycle at all —
+every helper just calls `_cursor()`.
+"""
+
 import os
 import psycopg2
 import psycopg2.extras
@@ -5,25 +17,30 @@ import psycopg2.extras
 # ---------------------------------------------------------------------------
 # Connection
 # ---------------------------------------------------------------------------
-# Uses environment variables when available (recommended for deployment),
-# falling back to the original local defaults for local dev.
+
+DB_CONFIG = dict(
+    host=os.environ.get("DB_HOST", "localhost"),
+    database=os.environ.get("DB_NAME", "cineWatch"),
+    user=os.environ.get("DB_USER", "postgres"),
+    password=os.environ.get("DB_PASSWORD", "2602"),
+    port=os.environ.get("DB_PORT", "5432"),
+)
+
+_connection = None
+
 
 def get_connection():
-    return psycopg2.connect(
-        host=os.environ.get("DB_HOST", "localhost"),
-        database=os.environ.get("DB_NAME", "cineWatch"),
-        user=os.environ.get("DB_USER", "postgres"),
-        password=os.environ.get("DB_PASSWORD", "2602"),
-        port=os.environ.get("DB_PORT", "5432"),
-    )
-
-
-connection = get_connection()
-connection.autocommit = False
+    """Returns a live connection, reconnecting if needed."""
+    global _connection
+    if _connection is None or _connection.closed:
+        _connection = psycopg2.connect(**DB_CONFIG)
+        _connection.autocommit = False
+    return _connection
 
 
 def _cursor():
-    return connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    conn = get_connection()
+    return conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 
 # ---------------------------------------------------------------------------
@@ -32,9 +49,10 @@ def _cursor():
 
 def init_db():
     """Creates the movies table if it doesn't exist yet, and adds any
-    columns the newer frontend needs (poster_url, notes) without touching
+    columns a newer frontend needs (poster_url, notes) without touching
     existing rows."""
-    cur = connection.cursor()
+    conn = get_connection()
+    cur = conn.cursor()
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS movies (
@@ -49,14 +67,13 @@ def init_db():
         )
         """
     )
-    # Backfill columns for anyone running against an older table.
-    for col, ddl in [
-        ("poster_url", "ALTER TABLE movies ADD COLUMN IF NOT EXISTS poster_url TEXT"),
-        ("notes", "ALTER TABLE movies ADD COLUMN IF NOT EXISTS notes TEXT"),
-        ("created_at", "ALTER TABLE movies ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()"),
+    for ddl in [
+        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS poster_url TEXT",
+        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS notes TEXT",
+        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()",
     ]:
         cur.execute(ddl)
-    connection.commit()
+    conn.commit()
     cur.close()
 
 
@@ -65,7 +82,7 @@ def init_db():
 # ---------------------------------------------------------------------------
 
 def view_movies():
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute("SELECT * FROM movies ORDER BY created_at DESC, id DESC")
     rows = cur.fetchall()
     cur.close()
@@ -73,7 +90,7 @@ def view_movies():
 
 
 def get_movie(movie_id):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute("SELECT * FROM movies WHERE id = %s", (movie_id,))
     row = cur.fetchone()
     cur.close()
@@ -81,7 +98,7 @@ def get_movie(movie_id):
 
 
 def add_movie(title, genre, poster_url=None, notes=None):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute(
         """
         INSERT INTO movies (title, genre, status, poster_url, notes)
@@ -91,49 +108,49 @@ def add_movie(title, genre, poster_url=None, notes=None):
         (title, genre, "Watchlist", poster_url, notes),
     )
     row = cur.fetchone()
-    connection.commit()
+    conn.commit()
     cur.close()
     return dict(row)
 
 
 def mark_watched(movie_id):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute(
         "UPDATE movies SET status = 'Watched' WHERE id = %s RETURNING *",
         (movie_id,),
     )
     row = cur.fetchone()
-    connection.commit()
+    conn.commit()
     cur.close()
     return dict(row) if row else None
 
 
 def mark_watchlist(movie_id):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute(
         "UPDATE movies SET status = 'Watchlist' WHERE id = %s RETURNING *",
         (movie_id,),
     )
     row = cur.fetchone()
-    connection.commit()
+    conn.commit()
     cur.close()
     return dict(row) if row else None
 
 
 def rate_movie(movie_id, rating):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute(
         "UPDATE movies SET rating = %s WHERE id = %s RETURNING *",
         (rating, movie_id),
     )
     row = cur.fetchone()
-    connection.commit()
+    conn.commit()
     cur.close()
     return dict(row) if row else None
 
 
 def delete_movie(movie_id):
-    cur = _cursor()
+    conn, cur = _cursor()
     cur.execute("DELETE FROM movies WHERE id = %s", (movie_id,))
-    connection.commit()
+    conn.commit()
     cur.close()
