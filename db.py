@@ -1,156 +1,168 @@
 """
-CineWatch — database layer.
+db.py
+-----
+Everything related to talking to PostgreSQL lives here, so server.py
+never has to know about connection strings, cursors, or SQL.
 
-Wraps a Postgres `movies` table with a small set of CRUD functions used by
-server.py. Connection details come from environment variables (see
-setup.md), falling back to sane local-dev defaults.
-
-A connection is opened lazily and re-opened automatically if it drops, so
-the API server doesn't need to worry about connection lifecycle at all —
-every helper just calls `_cursor()`.
+Uses a small threaded connection pool so the Flask dev server (and any
+future production WSGI server) can handle multiple requests without
+opening a fresh TCP connection to Postgres every time.
 """
 
 import os
+from contextlib import contextmanager
+
 import psycopg2
 import psycopg2.extras
+from psycopg2.pool import ThreadedConnectionPool
+from dotenv import load_dotenv
 
-# ---------------------------------------------------------------------------
-# Connection
-# ---------------------------------------------------------------------------
+load_dotenv()
 
-DB_CONFIG = dict(
-    host=os.environ.get("DB_HOST", "localhost"),
-    database=os.environ.get("DB_NAME", "cineWatch"),
-    user=os.environ.get("DB_USER", "postgres"),
-    password=os.environ.get("DB_PASSWORD", "2602"),
-    port=os.environ.get("DB_PORT", "5432"),
-)
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": os.getenv("DB_PORT", "5432"),
+    "dbname": os.getenv("DB_NAME", "cozy_watchlist"),
+    "user": os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", ""),
+}
 
-_connection = None
-
-
-def get_connection():
-    """Returns a live connection, reconnecting if needed."""
-    global _connection
-    if _connection is None or _connection.closed:
-        _connection = psycopg2.connect(**DB_CONFIG)
-        _connection.autocommit = False
-    return _connection
+_pool = None
 
 
-def _cursor():
-    conn = get_connection()
-    return conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+def init_pool(minconn=1, maxconn=10):
+    """Create the connection pool once, at app startup."""
+    global _pool
+    if _pool is None:
+        _pool = ThreadedConnectionPool(minconn, maxconn, **DB_CONFIG)
+    return _pool
 
 
-# ---------------------------------------------------------------------------
-# Schema
-# ---------------------------------------------------------------------------
+def close_pool():
+    global _pool
+    if _pool is not None:
+        _pool.closeall()
+        _pool = None
+
+
+@contextmanager
+def get_cursor(commit=False):
+    """
+    Context manager that hands back a dict-cursor from the pool and
+    always returns the connection when it's done, even on error.
+
+        with get_cursor(commit=True) as cur:
+            cur.execute("INSERT INTO ...")
+    """
+    if _pool is None:
+        init_pool()
+    conn = _pool.getconn()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        yield cur
+        if commit:
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+        _pool.putconn(conn)
+
 
 def init_db():
-    """Creates the movies table if it doesn't exist yet, and adds any
-    columns a newer frontend needs (poster_url, notes) without touching
-    existing rows."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS movies (
-            id SERIAL PRIMARY KEY,
-            title TEXT NOT NULL,
-            genre TEXT,
-            status TEXT DEFAULT 'Watchlist',
-            rating INTEGER,
-            poster_url TEXT,
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
+    """Create the watchlist table if it doesn't exist yet. Safe to re-run."""
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS watchlist_items (
+                id          SERIAL PRIMARY KEY,
+                title       TEXT NOT NULL,
+                media_type  TEXT NOT NULL DEFAULT 'movie'
+                            CHECK (media_type IN ('movie', 'tv')),
+                status      TEXT NOT NULL DEFAULT 'want_to_watch'
+                            CHECK (status IN ('want_to_watch', 'watching', 'watched')),
+                rating      SMALLINT
+                            CHECK (rating BETWEEN 1 AND 5),
+                notes       TEXT DEFAULT '',
+                added_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            """
         )
-        """
-    )
-    for ddl in [
-        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS poster_url TEXT",
-        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS notes TEXT",
-        "ALTER TABLE movies ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()",
-    ]:
-        cur.execute(ddl)
-    conn.commit()
-    cur.close()
 
 
-# ---------------------------------------------------------------------------
-# CRUD
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Queries used by the API layer (server.py)
+# ---------------------------------------------------------------------
 
-def view_movies():
-    conn, cur = _cursor()
-    cur.execute("SELECT * FROM movies ORDER BY created_at DESC, id DESC")
-    rows = cur.fetchall()
-    cur.close()
-    return [dict(r) for r in rows]
-
-
-def get_movie(movie_id):
-    conn, cur = _cursor()
-    cur.execute("SELECT * FROM movies WHERE id = %s", (movie_id,))
-    row = cur.fetchone()
-    cur.close()
-    return dict(row) if row else None
+def list_items(status=None):
+    with get_cursor() as cur:
+        if status:
+            cur.execute(
+                "SELECT * FROM watchlist_items WHERE status = %s ORDER BY added_at DESC;",
+                (status,),
+            )
+        else:
+            cur.execute("SELECT * FROM watchlist_items ORDER BY added_at DESC;")
+        return cur.fetchall()
 
 
-def add_movie(title, genre, poster_url=None, notes=None):
-    conn, cur = _cursor()
-    cur.execute(
-        """
-        INSERT INTO movies (title, genre, status, poster_url, notes)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING *
-        """,
-        (title, genre, "Watchlist", poster_url, notes),
-    )
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    return dict(row)
+def get_item(item_id):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM watchlist_items WHERE id = %s;", (item_id,))
+        return cur.fetchone()
 
 
-def mark_watched(movie_id):
-    conn, cur = _cursor()
-    cur.execute(
-        "UPDATE movies SET status = 'Watched' WHERE id = %s RETURNING *",
-        (movie_id,),
-    )
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    return dict(row) if row else None
+def create_item(title, media_type, notes=""):
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            INSERT INTO watchlist_items (title, media_type, notes)
+            VALUES (%s, %s, %s)
+            RETURNING *;
+            """,
+            (title, media_type, notes),
+        )
+        return cur.fetchone()
 
 
-def mark_watchlist(movie_id):
-    conn, cur = _cursor()
-    cur.execute(
-        "UPDATE movies SET status = 'Watchlist' WHERE id = %s RETURNING *",
-        (movie_id,),
-    )
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    return dict(row) if row else None
+def update_item(item_id, **fields):
+    """
+    Partial update. Only columns present in `fields` get touched.
+    Allowed keys: title, media_type, status, rating, notes
+    """
+    allowed = {"title", "media_type", "status", "rating", "notes"}
+    updates = {k: v for k, v in fields.items() if k in allowed}
+    if not updates:
+        return get_item(item_id)
+
+    set_clause = ", ".join(f"{col} = %s" for col in updates)
+    values = list(updates.values()) + [item_id]
+
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            f"UPDATE watchlist_items SET {set_clause} WHERE id = %s RETURNING *;",
+            values,
+        )
+        return cur.fetchone()
 
 
-def rate_movie(movie_id, rating):
-    conn, cur = _cursor()
-    cur.execute(
-        "UPDATE movies SET rating = %s WHERE id = %s RETURNING *",
-        (rating, movie_id),
-    )
-    row = cur.fetchone()
-    conn.commit()
-    cur.close()
-    return dict(row) if row else None
+def delete_item(item_id):
+    with get_cursor(commit=True) as cur:
+        cur.execute("DELETE FROM watchlist_items WHERE id = %s RETURNING id;", (item_id,))
+        return cur.fetchone()
 
 
-def delete_movie(movie_id):
-    conn, cur = _cursor()
-    cur.execute("DELETE FROM movies WHERE id = %s", (movie_id,))
-    conn.commit()
-    cur.close()
+def get_stats():
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                COUNT(*) FILTER (WHERE status = 'want_to_watch') AS want_to_watch,
+                COUNT(*) FILTER (WHERE status = 'watching')      AS watching,
+                COUNT(*) FILTER (WHERE status = 'watched')       AS watched,
+                COUNT(*)                                          AS total
+            FROM watchlist_items;
+            """
+        )
+        return cur.fetchone()
