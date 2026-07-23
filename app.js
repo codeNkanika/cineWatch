@@ -65,7 +65,7 @@ async function setWatched(id, watched) {
   const path = `${API_BASE}/${id}/${watched ? "watched" : "watchlist"}`;
   const updated = await apiRequest(path, { method: "PATCH" });
   patchMovie(updated);
-  showToast(watched ? "Marked as watched" : "Moved back to watchlist");
+  showToast(watched ? "Stamped as watched" : "Moved back to watchlist");
 }
 
 async function setRating(id, rating) {
@@ -81,7 +81,7 @@ async function removeMovie(id) {
   await apiRequest(`${API_BASE}/${id}`, { method: "DELETE" });
   state.movies = state.movies.filter((m) => m.id !== id);
   render();
-  showToast("Removed from ledger");
+  showToast("Torn from the ledger");
 }
 
 function patchMovie(updated) {
@@ -127,7 +127,7 @@ function render() {
   emptyState.hidden = list.length !== 0;
 
   if (state.movies.length === 0) {
-    emptyMsg.textContent = "Nothing here yet. Add the first film to start your ledger.";
+    emptyMsg.textContent = "Nothing here yet — add the first film to start your ledger.";
   } else if (list.length === 0) {
     emptyMsg.textContent = "No films match this search or filter.";
   }
@@ -173,6 +173,7 @@ function buildCard(movie, index) {
           : ""
       }
     </div>
+    <div class="tear-line"></div>
     <div class="card-body">
       <h3 class="card-title">${escapeHTML(movie.title)}</h3>
       <p class="card-genre">${escapeHTML(movie.genre || "Unsorted")}</p>
@@ -184,7 +185,7 @@ function buildCard(movie, index) {
         <button class="icon-btn rate-btn" data-id="${movie.id}">
           ${starIcon()} Rate
         </button>
-        <button class="icon-btn danger delete-btn" data-id="${movie.id}">
+        <button class="icon-btn danger delete-btn" data-id="${movie.id}" aria-label="Remove ${escapeAttr(movie.title)}">
           ${trashIcon()}
         </button>
       </div>
@@ -257,7 +258,7 @@ function openRatingPopover(anchorBtn, movie) {
   document.body.appendChild(pop);
   const rect = anchorBtn.getBoundingClientRect();
   pop.style.top = `${window.scrollY + rect.bottom + 8}px`;
-  pop.style.left = `${Math.min(window.scrollX + rect.left - 60, window.innerWidth - 300)}px`;
+  pop.style.left = `${Math.min(window.scrollX + rect.left - 60, window.innerWidth - 280)}px`;
 
   activePopover = pop;
 
@@ -319,7 +320,7 @@ movieForm.addEventListener("submit", async (e) => {
 
   const submitBtn = movieForm.querySelector(".btn-solid");
   submitBtn.disabled = true;
-  submitBtn.textContent = "Saving…";
+  submitBtn.textContent = "Printing…";
 
   try {
     await createMovie({ title, genre, poster_url, notes });
@@ -329,7 +330,7 @@ movieForm.addEventListener("submit", async (e) => {
     formError.hidden = false;
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Save to ledger";
+    submitBtn.textContent = "Print ticket";
   }
 });
 
