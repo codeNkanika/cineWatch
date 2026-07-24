@@ -7,20 +7,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Karla:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:            #1E1A22;
-  --bg-soft:       #262030;
-  --surface:       #2E2738;
-  --surface-hover: #372F41;
-  --border:        #3E3548;
+  --bg:            #FDF6F8;
+  --bg-soft:       #FCEEF2;
+  --surface:       #FFFFFF;
+  --surface-hover: #FDF0F4;
+  --border:        #F2D9E2;
 
-  --lamp:          #E8A857;
-  --lamp-soft:     #F4C579;
-  --ember:         #CB6E52;
-  --sage:          #93AC8C;
+  --lamp:          #E8A0B4;
+  --lamp-soft:     #F2BFCE;
+  --ember:         #D98CA0;
+  --sage:          #C9AECF;
 
-  --text:          #F1E6D6;
-  --text-muted:    #B4A8BC;
-  --text-faint:    #7C7188;
+  --text:          #4A363E;
+  --text-muted:    #8C6C77;
+  --text-faint:    #B79AA5;
 
   --font-display: 'Fraunces', serif;
   --font-body: 'Karla', sans-serif;
@@ -30,8 +30,8 @@
   --radius-md: 16px;
   --radius-lg: 26px;
 
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --shadow-lamp: 0 0 60px rgba(232, 168, 87, 0.18);
+  --shadow-soft: 0 10px 30px rgba(184, 130, 150, 0.14);
+  --shadow-lamp: 0 0 60px rgba(232, 160, 180, 0.25);
 }
 
 * { box-sizing: border-box; }
@@ -41,7 +41,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(232, 168, 87, 0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(232, 160, 180, 0.16), transparent),
     var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -49,7 +49,7 @@ body {
   min-height: 100vh;
 }
 
-::selection { background: var(--lamp); color: #241C12; }
+::selection { background: var(--lamp); color: #FFFFFF; }
 
 a { color: inherit; }
 
@@ -101,7 +101,7 @@ body::before {
 
 .nav__flame {
   font-size: 1.1rem;
-  filter: drop-shadow(0 0 8px rgba(232, 168, 87, 0.7));
+  filter: drop-shadow(0 0 8px rgba(232, 160, 180, 0.7));
 }
 
 .nav__link {
@@ -144,7 +144,7 @@ body::before {
   position: absolute;
   inset: -40px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(244, 197, 121, 0.45), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 191, 206, 0.55), transparent 70%);
   animation: flicker 4s ease-in-out infinite;
 }
 
@@ -153,7 +153,7 @@ body::before {
   inset: 18px;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 35%, var(--lamp-soft), var(--lamp) 60%, var(--ember) 100%);
-  box-shadow: 0 0 40px rgba(232, 168, 87, 0.8);
+  box-shadow: 0 0 40px rgba(232, 160, 180, 0.7);
 }
 
 @keyframes flicker {
@@ -210,7 +210,7 @@ body::before {
 
 .btn--primary {
   background: linear-gradient(135deg, var(--lamp-soft), var(--lamp));
-  color: #241C12;
+  color: #5A2E3B;
   box-shadow: var(--shadow-lamp), 0 8px 20px rgba(0,0,0,0.3);
 }
 
@@ -353,7 +353,7 @@ body::before {
 .add-form select:focus {
   outline: none;
   border-color: var(--lamp);
-  box-shadow: 0 0 0 3px rgba(232, 168, 87, 0.18);
+  box-shadow: 0 0 0 3px rgba(232, 160, 180, 0.25);
 }
 
 .type-toggle {
@@ -377,7 +377,7 @@ body::before {
 
 .type-toggle input:checked + label {
   background: var(--lamp);
-  color: #241C12;
+  color: #5A2E3B;
 }
 
 /* ---------------- Filter tabs ---------------- */
@@ -460,7 +460,7 @@ body::before {
   text-transform: uppercase;
   padding: 4px 9px;
   border-radius: 999px;
-  color: #241C12;
+  color: #5A2E3B;
   white-space: nowrap;
 }
 
@@ -550,10 +550,10 @@ body::before {
   transition: all 0.15s ease;
 }
 
-.ticket__delete:hover { color: var(--ember); background: rgba(203, 110, 82, 0.12); }
+.ticket__delete:hover { color: var(--ember); background: rgba(217, 140, 160, 0.14); }
 
-.ticket--watched { border-color: rgba(147, 172, 140, 0.4); }
-.ticket--watching { border-color: rgba(232, 168, 87, 0.4); }
+.ticket--watched { border-color: rgba(201, 174, 207, 0.5); }
+.ticket--watching { border-color: rgba(232, 160, 180, 0.4); }
 
 /* ---------------- Empty state ---------------- */
 
