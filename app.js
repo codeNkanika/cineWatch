@@ -3,14 +3,14 @@
    Talks to the Flask API (server.py) which is backed by
    PostgreSQL (db.py). No frameworks, just fetch + DOM.
    ========================================================= */
-
+ 
 const API_BASE = "/api";
-
+ 
 const state = {
   items: [],
   filter: "all",
 };
-
+ 
 // ---------------- DOM refs ----------------
 const grid = document.getElementById("grid");
 const emptyState = document.getElementById("empty");
@@ -19,40 +19,51 @@ const titleInput = document.getElementById("title-input");
 const notesInput = document.getElementById("notes-input");
 const filterBar = document.getElementById("filters");
 const toastEl = document.getElementById("toast");
-
+ 
 const statWant = document.getElementById("stat-want");
 const statWatching = document.getElementById("stat-watching");
 const statWatched = document.getElementById("stat-watched");
-
+const userEmailEl = document.getElementById("user-email");
+const logoutLink = document.getElementById("logout-link");
+ 
 const STATUS_LABEL = {
   want_to_watch: "Want to watch",
   watching: "Watching",
   watched: "Watched",
 };
-
+ 
 // ---------------- API helpers ----------------
-
+ 
 async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, { credentials: "same-origin" });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    return new Promise(() => {}); // stop further handling, we're navigating away
+  }
   if (!res.ok) throw new Error(`GET ${path} failed`);
   return res.json();
 }
-
+ 
 async function apiSend(path, method, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    return new Promise(() => {});
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `${method} ${path} failed`);
   }
   return res.json();
 }
-
+ 
 // ---------------- Data flow ----------------
-
+ 
 async function loadEverything() {
   try {
     const [items, stats] = await Promise.all([
@@ -67,15 +78,39 @@ async function loadEverything() {
     console.error(err);
   }
 }
-
+ 
+async function loadWhoAmI() {
+  try {
+    const res = await fetch(`${API_BASE}/me`, { credentials: "same-origin" });
+    const me = await res.json();
+    if (!me) {
+      window.location.href = "/login";
+      return;
+    }
+    if (userEmailEl) userEmailEl.textContent = me.email;
+  } catch (err) {
+    console.error(err);
+  }
+}
+ 
+async function logout(evt) {
+  evt.preventDefault();
+  try {
+    await apiSend("/logout", "POST");
+    window.location.href = "/login";
+  } catch (err) {
+    showToast(err.message);
+  }
+}
+ 
 async function addItem(evt) {
   evt.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
-
+ 
   const media_type = document.querySelector('input[name="media_type"]:checked').value;
   const notes = notesInput.value.trim();
-
+ 
   try {
     await apiSend("/items", "POST", { title, media_type, notes });
     titleInput.value = "";
@@ -87,7 +122,7 @@ async function addItem(evt) {
     showToast(err.message);
   }
 }
-
+ 
 async function changeStatus(id, status) {
   try {
     await apiSend(`/items/${id}`, "PATCH", { status });
@@ -96,7 +131,7 @@ async function changeStatus(id, status) {
     showToast(err.message);
   }
 }
-
+ 
 async function setRating(id, rating) {
   try {
     await apiSend(`/items/${id}`, "PATCH", { rating });
@@ -105,7 +140,7 @@ async function setRating(id, rating) {
     showToast(err.message);
   }
 }
-
+ 
 async function removeItem(id, title) {
   if (!confirm(`Remove "${title}" from your list?`)) return;
   try {
@@ -116,38 +151,38 @@ async function removeItem(id, title) {
     showToast(err.message);
   }
 }
-
+ 
 // ---------------- Rendering ----------------
-
+ 
 function renderStats(stats) {
   statWant.textContent = stats.want_to_watch ?? 0;
   statWatching.textContent = stats.watching ?? 0;
   statWatched.textContent = stats.watched ?? 0;
 }
-
+ 
 function renderGrid() {
   const visible = state.items.filter(
     (item) => state.filter === "all" || item.status === state.filter
   );
-
+ 
   grid.innerHTML = "";
-
+ 
   if (visible.length === 0) {
     emptyState.style.display = "block";
     return;
   }
   emptyState.style.display = "none";
-
+ 
   visible.forEach((item) => grid.appendChild(renderTicket(item)));
 }
-
+ 
 function renderTicket(item) {
   const card = document.createElement("article");
   card.className = `ticket ticket--${item.status.replace("want_to_watch", "want")}`;
-
+ 
   const typeLabel = item.media_type === "tv" ? "TV Show" : "Movie";
   const typeClass = item.media_type === "tv" ? "ticket__type--tv" : "ticket__type--movie";
-
+ 
   card.innerHTML = `
     <div class="ticket__main">
       <div class="ticket__top">
@@ -177,11 +212,11 @@ function renderTicket(item) {
       <button class="ticket__delete" title="Remove">🗑</button>
     </div>
   `;
-
+ 
   // Set text via textContent to avoid any HTML injection from titles/notes
   card.querySelector(".ticket__title").textContent = item.title;
   if (item.notes) card.querySelector(".ticket__notes").textContent = item.notes;
-
+ 
   // Wire up interactions
   card.querySelectorAll(".star").forEach((star) => {
     star.addEventListener("click", () => {
@@ -190,20 +225,20 @@ function renderTicket(item) {
       setRating(item.id, alreadyThatRating ? null : value);
     });
   });
-
+ 
   card.querySelector(".status-select").addEventListener("change", (e) => {
     changeStatus(item.id, e.target.value);
   });
-
+ 
   card.querySelector(".ticket__delete").addEventListener("click", () => {
     removeItem(item.id, item.title);
   });
-
+ 
   return card;
 }
-
+ 
 // ---------------- Toast ----------------
-
+ 
 let toastTimer = null;
 function showToast(message) {
   toastEl.textContent = message;
@@ -211,9 +246,9 @@ function showToast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
 }
-
+ 
 // ---------------- Filters ----------------
-
+ 
 filterBar.addEventListener("click", (e) => {
   const btn = e.target.closest(".filter-tab");
   if (!btn) return;
@@ -222,8 +257,12 @@ filterBar.addEventListener("click", (e) => {
   state.filter = btn.dataset.filter;
   renderGrid();
 });
-
+ 
 // ---------------- Init ----------------
-
+ 
 addForm.addEventListener("submit", addItem);
+if (logoutLink) logoutLink.addEventListener("click", logout);
+ 
+loadWhoAmI();
 loadEverything();
+ 
