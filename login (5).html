@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in · Cozy Watchlist</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕯️</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/" class="nav__brand"><span class="nav__flame">🕯️</span> Cozy Watchlist</a>
+    <a href="/signup" class="nav__link">Sign up →</a>
+  </nav>
+
+  <div class="auth-wrap">
+    <form class="auth-card" id="login-form">
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Log in to see your own private watchlist.</p>
+
+      <label for="email-input">Email</label>
+      <input type="email" id="email-input" required autocomplete="email" />
+
+      <label for="password-input">Password</label>
+      <input type="password" id="password-input" required autocomplete="current-password" />
+
+      <p class="auth-error" id="auth-error"></p>
+
+      <button type="submit" class="btn btn--primary auth-submit">Log in</button>
+
+      <p class="auth-switch">No account yet? <a href="/signup">Sign up</a></p>
+    </form>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>wireAuthForm("login-form", "/login", "/watchlist");</script>
+</body>
+</html>
