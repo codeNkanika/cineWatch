@@ -1,12 +1,6 @@
 """
 db.py
------
-Everything related to talking to PostgreSQL lives here, so server.py
-never has to know about connection strings, cursors, or SQL.
- 
-Uses a small threaded connection pool so the Flask dev server (and any
-future production WSGI server) can handle multiple requests without
-opening a fresh TCP connection to Postgres every time.
+
 """
  
 import os
